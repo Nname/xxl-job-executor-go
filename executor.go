@@ -3,9 +3,12 @@ package xxl
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
+	"net/rpc"
 	"os"
 	"os/signal"
 	"strings"
@@ -90,6 +93,13 @@ func (e *executor) Use(middlewares ...Middleware) {
 }
 
 func (e *executor) Run() (err error) {
+
+	rpc.HandleHTTP()
+	listen, err := net.Listen("tcp", fmt.Sprintf("%s:%s", e.opts.ExecutorPort, e.address))
+	if err != nil {
+		log.Fatal("err: ", err)
+	}
+
 	// 创建路由器
 	mux := http.NewServeMux()
 	// 设置路由规则
@@ -99,14 +109,17 @@ func (e *executor) Run() (err error) {
 	mux.HandleFunc("/beat", e.beat)
 	mux.HandleFunc("/idleBeat", e.idleBeat)
 	// 创建服务器
-	server := &http.Server{
-		Addr:         ":" + e.opts.ExecutorPort,
-		WriteTimeout: time.Second * 3,
-		Handler:      mux,
-	}
+	//server := &http.Server{
+	//	Addr:         ":" + e.opts.ExecutorPort,
+	//	WriteTimeout: time.Second * 3,
+	//	Handler:      mux,
+	//}
+
+	go http.Serve(listen, mux)
+
 	// 监听端口并提供服务
 	e.log.Info("Starting server at " + e.address)
-	go server.ListenAndServe()
+	// go server.ListenAndServe()
 	quit := make(chan os.Signal)
 	signal.Notify(quit, syscall.SIGKILL, syscall.SIGQUIT, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
