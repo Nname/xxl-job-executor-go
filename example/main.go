@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	xxl "github.com/xxl-job/xxl-job-executor-go"
-	"github.com/xxl-job/xxl-job-executor-go/example/task"
+	xxl "github.com/Nname/xxl-job-executor-go"
+	"github.com/Nname/xxl-job-executor-go/example/task"
 	"log"
 )
 
